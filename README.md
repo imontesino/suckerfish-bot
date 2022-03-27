@@ -21,8 +21,10 @@ Install the python dependencies.
 
 ```bash
 cd ~/suckerfish-bot
-sudo pip3 install -r requirements.txt
+pip3 install -r requirements.txt
 ```
+
+Add your bot token to the config file.
 
 Then copy the service file to the systemd folder.
 
