@@ -8,6 +8,7 @@ for my work and into Windows for accessing a photo archive and gamestreaming via
 
 <!-- TODO: Add Hardware instructions section -->
 
+<!-- TODO: Add section on setting up ssh/sudo-->
 ## Installation
 
 Clone the repo to the home directory of the pi zero.
@@ -29,5 +30,5 @@ Add your bot token to the config file.
 Then copy the service file to the systemd folder.
 
 ```bash
-sudo cp /home/pi/suckerfish_bot/suckerfish_bot.service /etc/systemd/system/
+sudo cp /home/pi/suckerfish_bot/resources/suckerfish_bot.service /etc/systemd/system/
 ```
