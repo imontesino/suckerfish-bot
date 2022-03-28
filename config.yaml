@@ -7,8 +7,13 @@ telegram_api:
   # List of user's chat id with access to the power on/off functions
   allowed_chats:
 
+host_pc:
+  local_ip:
+  username:
+  grub_windows_entry: 1  # Second entry
+
 pin_wiring:
   # GPIO number of the pins were the positive of the relay
   # For reference https://es.pinout.xyz/pinout/io_pi_zero
-  power_pin: 21 # Pin 40 on board
-  reset_pin: 20 # Pin 38 on board
+  power_pin: 21  # Pin 40 on board
+  reset_pin: 20  # Pin 38 on board

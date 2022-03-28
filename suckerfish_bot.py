@@ -2,12 +2,11 @@
 
 import os
 import socket
-import subprocess
-import threading
 import time
 from typing import List
 
 import yaml
+import paramiko
 from gpiozero import LED
 from requests import get
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
@@ -41,6 +40,12 @@ class SuckerfishBot:
         # Load the config
         self.get_config(config_file)
 
+        # SSH client
+        self.ssh_client = paramiko.SSHClient()
+        self.key = paramiko.RSAKey.from_private_key_file('/home/pi/.ssh/id_rsa')
+        self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        self.ssh_client.connect(self.host_ip, username=self.host_username)
+
         # Define the power and reset pins
         self.power_switch = LED(self.power_pin)
         self.reset_switch = LED(self.reset_pin)
@@ -69,8 +74,15 @@ class SuckerfishBot:
                 raise ValueError('No bot token found in config file')
 
             self.allowed_chats: List[str] = config['telegram_api']['allowed_chats']
+
+            # Pin wiring por the switches
             self.power_pin: int = config['pin_wiring']['power_pin']
             self.reset_pin: int = config['pin_wiring']['reset_pin']
+
+            # host pc data
+            self.host_ip: str = config['host_pc']['local_ip']
+            self.host_username: str = config['host_pc']['username']
+            self.windows_entry_id: int = config['host_pc']['grub_windows_entry']
 
     def start(self):
         """Start the bot."""
@@ -147,6 +159,21 @@ class SuckerfishBot:
             self.power_switch.off()
         else:
             query.edit_message_text(text=f"Shutdown canceled")
+
+    def make_windows_next(self):
+        """Make the windows entry the default for the next boot"""
+        filename = "resources/grubenv_template"
+        with open(filename, "r") as file:
+            #read whole file to a string
+            data = file.read()
+
+        #replace the configured entry
+        grubenv_text = data.replace("<entry_id>", str(self.windows_entry_id))
+
+        bash_command = "sudo echo '" + grubenv_text + "' > /boot/grub/grubenv"
+
+        # Execute the bash command
+        self.ssh_client.exec_command(bash_command)
 
 
 def main():
