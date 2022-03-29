@@ -46,7 +46,7 @@ class SuckerfishBot:
         self.ssh_client = paramiko.SSHClient()
         self.key = paramiko.RSAKey.from_private_key_file('/home/pi/.ssh/id_rsa')
         self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        self.ssh_client.connect(self.host_ip, username=self.host_username, timeout=10)
+        self.connect_ssh()
 
         # Define the power and reset pins
         self.power_switch = LED(self.power_pin)
@@ -99,12 +99,19 @@ class SuckerfishBot:
             self.host_username: str = config['host_pc']['username']
             self.windows_entry_id: int = config['host_pc']['grub_windows_entry']
 
-    def connect_ssh(self) -> bool:
+    def connect_ssh(self, timeout=5) -> bool:
         """Connect to the ssh server"""
-        if not self.ssh_client.get_transport().is_active():
-            self.ssh_client.connect(self.host_ip, username=self.host_username, timeout=5)
+        if self.ssh_client.get_transport() is not None:
+            if not self.ssh_client.get_transport().is_active():
+                try:
+                    self.ssh_client.connect(self.host_ip, username=self.host_username, timeout=timeout)
+                except socket.timeout:
+                    pass
 
-        return self.ssh_client.get_transport().is_active()
+            return self.ssh_client.get_transport().is_active()
+
+        else:
+            return False
 
     def is_host_online(self):
         """Check if the host pc is online"""
@@ -246,7 +253,7 @@ class SuckerfishBot:
 
     def check_host_online(self, update: Update, context: CallbackContext) -> None:
         """Check if the host is online"""
-        if self.ssh_client.get_transport().is_active():
+        if self.connect_ssh():
             update.message.reply_text(f"The host is online")
         else:
             update.message.reply_text(f"The host is offline")
