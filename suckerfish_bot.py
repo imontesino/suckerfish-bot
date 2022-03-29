@@ -46,7 +46,7 @@ class SuckerfishBot:
         self.ssh_client = paramiko.SSHClient()
         self.key = paramiko.RSAKey.from_private_key_file('/home/pi/.ssh/id_rsa')
         self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        self.ssh_client.connect(self.host_ip, username=self.host_username)
+        self.ssh_client.connect(self.host_ip, username=self.host_username, timeout=10)
 
         # Define the power and reset pins
         self.power_switch = LED(self.power_pin)
@@ -62,11 +62,16 @@ class SuckerfishBot:
         self.dp.add_handler(CommandHandler("current_ip", self.current_ip))
         self.dp.add_handler(CommandHandler("power_switch", self.press_power_switch))
         self.dp.add_handler(CommandHandler("reset_switch", self.press_reset_switch))
-        self.dp.add_handler(CommandHandler("force_shutdown", self.force_shutdown))
-        self.dp.add_handler(CallbackQueryHandler(self.button))
         self.dp.add_handler(CommandHandler("get_chat_id", self.send_user_chat_id))
         self.dp.add_handler(CommandHandler("is_online", self.check_host_online))
+
+        # queries with menus
+        # TODO switch to context api
+        self.dp.add_handler(CommandHandler("force_shutdown", self.force_shutdown))
+        self.dp.add_handler(CallbackQueryHandler(self.check_force_shutdown))
+
         self.dp.add_handler(CommandHandler("power_on", self.power_on))
+        self.dp.add_handler(CallbackQueryHandler(self.select_os))
 
         # log all errors
         self.logger = DevChatLogger(self.dev_chat_id)
@@ -97,7 +102,7 @@ class SuckerfishBot:
     def connect_ssh(self) -> bool:
         """Connect to the ssh server"""
         if not self.ssh_client.get_transport().is_active():
-            self.ssh_client.connect(self.host_ip, username=self.host_username)
+            self.ssh_client.connect(self.host_ip, username=self.host_username, timeout=5)
 
         return self.ssh_client.get_transport().is_active()
 
@@ -179,7 +184,7 @@ class SuckerfishBot:
             reply_markup=reply_markup
         )
 
-    def button(self, update: Update, context: CallbackContext) -> None:
+    def check_force_shutdown(self, update: Update, context: CallbackContext) -> None:
         """ Callback for the force_shutdown button, if yes hold the powerbutton for 5 seconds """
         query = update.callback_query
 
@@ -217,7 +222,7 @@ class SuckerfishBot:
                 'The host is already online, please power off first'
             )
 
-    def button_os(self, update: Update, context: CallbackContext) -> None:
+    def select_os(self, update: Update, context: CallbackContext) -> None:
         """ Callback for the power_on button, if yes boot the selected OS """
         query = update.callback_query
 
