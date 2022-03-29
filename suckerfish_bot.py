@@ -5,8 +5,8 @@ import socket
 import time
 from typing import List
 
-import yaml
 import paramiko
+import yaml
 from gpiozero import LED
 from requests import get
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
@@ -161,17 +161,9 @@ class SuckerfishBot:
         else:
             query.edit_message_text(text=f"Shutdown canceled")
 
-    def ping_host(self) -> bool:
-        """Ping the host computer"""
-        try:
-            self.ssh_client.exec_command('ping -c 1 -W 1 {}'.format(self.host_ip))
-            return True
-        except:
-            return False
-
     def is_host_online(self, update: Update, context: CallbackContext) -> None:
         """Check if the host is online"""
-        if self.ping_host():
+        if self.ssh_client.get_transport().is_active():
             update.message.reply_text(f"The host is online")
         else:
             update.message.reply_text(f"The host is offline")
