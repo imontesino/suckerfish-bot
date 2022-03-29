@@ -62,6 +62,7 @@ class SuckerfishBot:
         self.dp.add_handler(CommandHandler("reset_switch", self.press_reset_switch))
         self.dp.add_handler(CommandHandler("force_shutdown", self.force_shutdown))
         self.dp.add_handler(CommandHandler("get_chat_id", self.send_user_chat_id))
+        self.dp.add_handler(CommandHandler("is_online", self.is_host_online))
         self.dp.add_handler(CallbackQueryHandler(self.button))
 
     def get_config(self, config_file: str):
@@ -159,6 +160,21 @@ class SuckerfishBot:
             self.power_switch.off()
         else:
             query.edit_message_text(text=f"Shutdown canceled")
+
+    def ping_host(self) -> bool:
+        """Ping the host computer"""
+        try:
+            self.ssh_client.exec_command('ping -c 1 -W 1 {}'.format(self.host_ip))
+            return True
+        except:
+            return False
+
+    def is_host_online(self, update: Update, context: CallbackContext) -> None:
+        """Check if the host is online"""
+        if self.ping_host():
+            update.message.reply_text(f"The host is online")
+        else:
+            update.message.reply_text(f"The host is offline")
 
     def make_windows_next(self):
         """Make the windows entry the default for the next boot"""
