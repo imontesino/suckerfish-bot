@@ -21,7 +21,7 @@ def only_allowed(func):
         if self.allowed_chats is None:
             return func(self, update, context)
         elif str(update.message.chat_id) in self.allowed_chats:
-            return func(update, context)
+            return func(self, update, context)
         else:
             update.message.reply_text('Only owner allowed')
     return wrapped
@@ -60,8 +60,8 @@ class SuckerfishBot:
         self.dp.add_handler(CommandHandler("current_ip", self.current_ip))
         self.dp.add_handler(CommandHandler("power_switch", self.press_power_switch))
         self.dp.add_handler(CommandHandler("reset_switch", self.press_reset_switch))
-        self.dp.add_handler(CommandHandler('force_shutdown', self.force_shutdown))
-        self.dp.add_handler(CommandHandler('get_chat_id', self.send_user_chat_id))
+        self.dp.add_handler(CommandHandler("force_shutdown", self.force_shutdown))
+        self.dp.add_handler(CommandHandler("get_chat_id", self.send_user_chat_id))
         self.dp.add_handler(CallbackQueryHandler(self.button))
 
     def get_config(self, config_file: str):
