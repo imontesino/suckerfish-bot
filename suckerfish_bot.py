@@ -61,9 +61,11 @@ class SuckerfishBot:
         self.dp.add_handler(CommandHandler("power_switch", self.press_power_switch))
         self.dp.add_handler(CommandHandler("reset_switch", self.press_reset_switch))
         self.dp.add_handler(CommandHandler("force_shutdown", self.force_shutdown))
+        self.dp.add_handler(CallbackQueryHandler(self.button))
         self.dp.add_handler(CommandHandler("get_chat_id", self.send_user_chat_id))
         self.dp.add_handler(CommandHandler("is_online", self.is_host_online))
-        self.dp.add_handler(CallbackQueryHandler(self.button))
+        self.dp.add_handler(CommandHandler("power_on", self.power_on))
+        self.dp.add_handler(CallbackQueryHandler(self.button_os))
 
     def get_config(self, config_file: str):
         """Get the config from the yaml file"""
@@ -84,6 +86,13 @@ class SuckerfishBot:
             self.host_ip: str = config['host_pc']['local_ip']
             self.host_username: str = config['host_pc']['username']
             self.windows_entry_id: int = config['host_pc']['grub_windows_entry']
+
+    def connect_ssh(self) -> bool:
+        """Connect to the ssh server"""
+        if not self.ssh_client.get_transport().is_active():
+            self.ssh_client.connect(self.host_ip, username=self.host_username)
+
+        return self.ssh_client.get_transport().is_active()
 
     def start(self):
         """Start the bot."""
@@ -114,19 +123,30 @@ class SuckerfishBot:
         )
         update.message.reply_text(message)
 
-    @only_allowed
-    def press_power_switch(self, update: Update, context: CallbackContext):
-        """Short the power switch on the computer"""
+    def power_switch_action(self):
         self.power_switch.on()
         time.sleep(1)
         self.power_switch.off()
 
     @only_allowed
-    def press_reset_switch(self, update: Update, context: CallbackContext):
-        """Short the reset switch on the computer"""
+    def press_power_switch(self, update: Update, context: CallbackContext):
+        """Short the power switch on the computer"""
+        self.power_switch_action()
+
+    def reset_switch_action(self):
         self.reset_switch.on()
         time.sleep(1)
         self.reset_switch.off()
+
+    @only_allowed
+    def press_reset_switch(self, update: Update, context: CallbackContext):
+        """Short the reset switch on the computer"""
+        self.reset_switch_action()
+
+    def power_switch_hold(self):
+        self.power_switch.on()
+        time.sleep(5)
+        self.power_switch.off()
 
     @only_allowed
     def force_shutdown(self, update: Update, context: CallbackContext) -> None:
@@ -155,11 +175,55 @@ class SuckerfishBot:
 
         if query.data == '1':
             query.edit_message_text(text=f"Done")
-            self.power_switch.on()
-            time.sleep(5)
-            self.power_switch.off()
+            self.power_switch_hold()
         else:
             query.edit_message_text(text=f"Shutdown canceled")
+
+    @only_allowed
+    def power_on(self, update: Update, context: CallbackContext):
+        """Power on the computer into the selected OS"""
+
+        if not self.is_host_online():
+            # Ask the user which OS he wants to boot
+            keyboard = [
+                [
+                    InlineKeyboardButton("Windows", callback_data='1'),
+                    InlineKeyboardButton("Ubuntu", callback_data='2'),
+                ]
+            ]
+
+            reply_markup = InlineKeyboardMarkup(keyboard)
+
+            update.message.reply_text(
+                'Which OS do you want to boot?',
+                reply_markup=reply_markup
+            )
+        else:
+            update.message.reply_text(
+                'The host is already online, please power off first'
+            )
+
+    def button_os(self, update: Update, context: CallbackContext) -> None:
+        """ Callback for the power_on button, if yes boot the selected OS """
+        query = update.callback_query
+
+        # CallbackQueries need to be answered, even if no notification to the user is needed
+        # Some clients may have trouble otherwise. See https://core.telegram.org/bots/api#callbackquery
+        query.answer()
+
+        if query.data == '1':  # Windows
+            query.edit_message_text(text=f"Booting Windows")
+            self.power_switch.on()
+            time.sleep(1)
+            self.power_switch.off()
+            time.sleep(20)
+            self.connect_ssh()
+            self.make_windows_next()
+            self.reset_switch_action()
+
+        else:  # Ubuntu
+            query.edit_message_text(text=f"Booting Linux")
+            self.power_switch_action()
 
     def is_host_online(self, update: Update, context: CallbackContext) -> None:
         """Check if the host is online"""
