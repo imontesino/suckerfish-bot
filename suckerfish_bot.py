@@ -63,7 +63,7 @@ class SuckerfishBot:
         self.dp.add_handler(CommandHandler("force_shutdown", self.force_shutdown))
         self.dp.add_handler(CallbackQueryHandler(self.button))
         self.dp.add_handler(CommandHandler("get_chat_id", self.send_user_chat_id))
-        self.dp.add_handler(CommandHandler("is_online", self.is_host_online))
+        self.dp.add_handler(CommandHandler("is_online", self.check_host_online))
         self.dp.add_handler(CommandHandler("power_on", self.power_on))
         self.dp.add_handler(CallbackQueryHandler(self.button_os))
 
@@ -93,6 +93,13 @@ class SuckerfishBot:
             self.ssh_client.connect(self.host_ip, username=self.host_username)
 
         return self.ssh_client.get_transport().is_active()
+
+    def is_host_online(self):
+        """Check if the host pc is online"""
+        if self.connect_ssh():
+            return True
+        else:
+            return False
 
     def start(self):
         """Start the bot."""
@@ -225,7 +232,7 @@ class SuckerfishBot:
             query.edit_message_text(text=f"Booting Linux")
             self.power_switch_action()
 
-    def is_host_online(self, update: Update, context: CallbackContext) -> None:
+    def check_host_online(self, update: Update, context: CallbackContext) -> None:
         """Check if the host is online"""
         if self.ssh_client.get_transport().is_active():
             update.message.reply_text(f"The host is online")
