@@ -1,14 +1,20 @@
 # Configuration parameters for the bot
 
 telegram_api:
+
   # Get the bot token from '@botfather'
   # https://www.siteguarding.com/en/how-to-get-telegram-bot-api-token
   bot_token:
-  # List of user's chat id with access to the power on/off functions
+
+  # Chat id for the dev (send errors, info, etc.)
+  dev_chat_id:
+
+  # List of user's chat id with access to the power on/off functions,
+  # leave empty for no restriction (not recommended)
   allowed_chats:
 
 host_pc:
-  local_ip:
+  local_ip:  # Set up a fixed local ip first
   username:
   grub_windows_entry: 1  # Second entry
 

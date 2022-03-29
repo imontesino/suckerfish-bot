@@ -13,6 +13,8 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import (CallbackContext, CallbackQueryHandler,
                           CommandHandler, Updater)
 
+from utils.loggers import DevChatLogger
+
 jupyter_active = False
 
 def only_allowed(func):
@@ -65,7 +67,11 @@ class SuckerfishBot:
         self.dp.add_handler(CommandHandler("get_chat_id", self.send_user_chat_id))
         self.dp.add_handler(CommandHandler("is_online", self.check_host_online))
         self.dp.add_handler(CommandHandler("power_on", self.power_on))
-        self.dp.add_handler(CallbackQueryHandler(self.button_os))
+
+        # log all errors
+        self.logger = DevChatLogger(self.dev_chat_id)
+        self.dp.add_error_handler(self.logger.error_handler)
+
 
     def get_config(self, config_file: str):
         """Get the config from the yaml file"""
@@ -76,6 +82,7 @@ class SuckerfishBot:
             if self.bot_token is None or self.bot_token == '':
                 raise ValueError('No bot token found in config file')
 
+            self.dev_chat_id: int = config['telegram_api']['dev_chat_id']
             self.allowed_chats: List[str] = config['telegram_api']['allowed_chats']
 
             # Pin wiring por the switches
