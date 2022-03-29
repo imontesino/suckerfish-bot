@@ -9,14 +9,14 @@ from telegram.ext import CallbackContext
 
 class DevChatLogger:
 
-    def __init__(self, chat_id):
-        self.chat_id = chat_id
+    def __init__(self, dev_chat_id):
+        self.dev_chat_id = dev_chat_id
         logging.basicConfig(
             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
         )
         self.logger = logging.getLogger(__name__)
 
-    def error_handler(self, update: object, context: CallbackContext, dev_chat_id) -> None:
+    def error_handler(self, update: object, context: CallbackContext) -> None:
         """Log the error and send a telegram message to notify the developer."""
         # Log the error before we do anything else, so we can see it even if something breaks.
         self.logger.error(msg="Exception while handling an update:", exc_info=context.error)
@@ -39,4 +39,4 @@ class DevChatLogger:
         )
 
         # Finally, send the message
-        context.bot.send_message(chat_id=dev_chat_id, text=message, parse_mode=ParseMode.HTML)
+        context.bot.send_message(chat_id=self.dev_chat_id, text=message, parse_mode=ParseMode.HTML)
