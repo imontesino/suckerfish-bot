@@ -61,7 +61,7 @@ class SuckerfishBot:
         self.dp.add_handler(CommandHandler("power_switch", self.press_power_switch))
         self.dp.add_handler(CommandHandler("reset_switch", self.press_reset_switch))
         self.dp.add_handler(CommandHandler('force_shutdown', self.force_shutdown))
-        self.dp.add_handler(CommandHandler('ge_chat_id', self.send_user_chat_id))
+        self.dp.add_handler(CommandHandler('get_chat_id', self.send_user_chat_id))
         self.dp.add_handler(CallbackQueryHandler(self.button))
 
     def get_config(self, config_file: str):
