@@ -66,12 +66,12 @@ class SuckerfishBot:
         self.dp.add_handler(CommandHandler("is_online", self.check_host_online))
 
         # queries with menus
-        # TODO switch to context api
+        # Use the function name as filter for the callback.
         self.dp.add_handler(CommandHandler("force_shutdown", self.force_shutdown))
-        self.dp.add_handler(CallbackQueryHandler(self.check_force_shutdown))
+        self.dp.add_handler(CallbackQueryHandler(self.check_force_shutdown, pattern="force_shutdown_"))
 
         self.dp.add_handler(CommandHandler("power_on", self.power_on))
-        self.dp.add_handler(CallbackQueryHandler(self.select_os))
+        self.dp.add_handler(CallbackQueryHandler(self.select_os, pattern="power_on_"))
 
         # log all errors
         self.logger = DevChatLogger(self.dev_chat_id)
@@ -177,10 +177,13 @@ class SuckerfishBot:
     @only_allowed_chats
     def force_shutdown(self, update: Update, context: CallbackContext) -> None:
         """ Ask the user if he wants to forcefully shutdown the computer """
+
+        # Add tag to prevent query from being handled by the wrong callbacks
+        tag = "force_shutdown_"
         keyboard = [
             [
-                InlineKeyboardButton("Yes", callback_data='1'),
-                InlineKeyboardButton("No", callback_data='2'),
+                InlineKeyboardButton("Yes", callback_data=tag+"yes"),
+                InlineKeyboardButton("No", callback_data=tag+"no"),
             ]
         ]
 
@@ -199,22 +202,31 @@ class SuckerfishBot:
         # Some clients may have trouble otherwise. See https://core.telegram.org/bots/api#callbackquery
         query.answer()
 
-        if query.data == '1':
+        # remove tag from callback data
+        tag = "force_shutdown_"
+        data = query.data.replace(tag, "")
+
+        if data == 'yes':
             query.edit_message_text(text=f"Done")
             self.power_switch_hold()
-        else:
+        elif data == 'no':
             query.edit_message_text(text=f"Shutdown canceled")
+        else:
+            raise RuntimeError("Unknown callback data")
 
     @only_allowed_chats
     def power_on(self, update: Update, context: CallbackContext):
         """Power on the computer into the selected OS"""
 
+        # Add tag to prevent query from being handled by the wrong callbacks
+        tag = "power_on_"
+
         if not self.is_host_online():
             # Ask the user which OS he wants to boot
             keyboard = [
                 [
-                    InlineKeyboardButton("Windows", callback_data='1'),
-                    InlineKeyboardButton("Ubuntu", callback_data='2'),
+                    InlineKeyboardButton("Windows", callback_data=tag+'Windows'),
+                    InlineKeyboardButton("Ubuntu", callback_data=tag+'Ubuntu'),
                 ]
             ]
 
@@ -237,7 +249,11 @@ class SuckerfishBot:
         # Some clients may have trouble otherwise. See https://core.telegram.org/bots/api#callbackquery
         query.answer()
 
-        if query.data == '1':  # Windows
+        # remove tag from callback data
+        tag = "power_on_"
+        data = query.data.replace(tag, "")
+
+        if data == 'Windows':
             query.edit_message_text(text=f"Booting Windows")
             self.power_switch.on()
             time.sleep(1)
@@ -247,9 +263,11 @@ class SuckerfishBot:
             self.make_windows_next()
             self.reset_switch_action()
 
-        else:  # Ubuntu
+        elif data == 'Ubuntu':
             query.edit_message_text(text=f"Booting Linux")
             self.power_switch_action()
+        else:
+            raise RuntimeError("Unknown callback data")
 
     def check_host_online(self, update: Update, context: CallbackContext) -> None:
         """Check if the host is online"""
