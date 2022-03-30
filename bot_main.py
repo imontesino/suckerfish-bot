@@ -1,5 +1,6 @@
 from asyncio.log import logger
 import os
+from cv2 import log
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
@@ -15,13 +16,12 @@ def main():
 
     bot_config, log_config = get_config('config.yaml')
 
-    dev_updater = Updater(token=log_config['dev_bot_token'])
     logger = DevChatLogger(
-        dev_updater,
+        log_config['dev_bot_token'],
         log_config['dev_chat_id'],
-        log_config['log_file'],
-        log_config['chat_log_level'],
-        log_config['file_log_level']
+        chat_log_level=log_config['chat_log_level'],
+        file_log_level=log_config['file_log_level'],
+        log_file=log_config['log_file']
     )
 
     try:
