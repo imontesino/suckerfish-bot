@@ -299,8 +299,11 @@ class SuckerfishBot:
             time.sleep(60)
             if self.connect_ssh():
                 self.logger.info("SSH connection successful")
-                self.make_windows_next()
-                self.reset_switch_action()
+                if self.make_windows_next():
+                    self.reset_switch_action()
+                else:
+                    self.logger.error("Could not make Windows next")
+                    query.edit_message_text(text=f"Failed to set windows on reboot")
             else:
                 self.logger.error("SSH connection failed in power_on->select_os")
                 query.edit_message_text(text=f"SSH connection failed")
@@ -322,7 +325,7 @@ class SuckerfishBot:
                 'The host is offline'
             )
 
-    def make_windows_next(self):
+    def make_windows_next(self) -> bool:
         """Make the windows entry the default for the next boot"""
         filename = "resources/grubenv_template"
         with open(filename, "r") as file:
@@ -335,4 +338,4 @@ class SuckerfishBot:
         bash_command = "sudo echo '" + grubenv_text + "' > /boot/grub/grubenv"
 
         # Execute the bash command
-        self.ssh_client.exec_command(bash_command)
+        return self.send_command_to_host(bash_command)
