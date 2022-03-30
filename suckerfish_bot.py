@@ -114,8 +114,8 @@ class SuckerfishBot:
         try:
             self.ssh_client.connect(self.host_ip, username=self.host_username, timeout=timeout)
             return True
-        except socket.timeout:
-            self.logger.debug(f"SSH connection timed out")
+        except Exception as e:
+            self.logger.error(f"SSH connection failed: {e}")
             return False
 
     def is_host_online(self):
