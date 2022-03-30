@@ -27,6 +27,7 @@ def main():
             bot_config['bot_token'],
             bot_config['host_ip'],
             bot_config['host_username'],
+            bot_config['host_password'],
             bot_config['power_pin'],
             bot_config['reset_pin'],
             bot_config['windows_entry_id'],

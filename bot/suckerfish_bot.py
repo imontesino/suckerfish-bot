@@ -33,6 +33,7 @@ class SuckerfishBot:
                  bot_token: str,
                  host_ip: str,
                  host_username: str,
+                 host_password: str,
                  power_pin: int = 21,
                  reset_pin: int = 20,
                  windows_entry_id: int = 1,  # Second after ubuntu
@@ -55,6 +56,7 @@ class SuckerfishBot:
         # host pc data
         self.host_ip = host_ip
         self.host_username = host_username
+        self.host_password = host_password
         self.windows_entry_id = windows_entry_id
 
         # Make sure to set use_context=True to use the new context based callbacks
@@ -105,37 +107,68 @@ class SuckerfishBot:
             self.logger.error(f"SSH connection failed: {e}")
             return False
 
-    def send_command_to_host(self, command: str) -> bool:
-        """Send a command to the host"""
-        # connect to the host
-        if not self.connect_ssh():
+    def get_ssh_connection(self, ssh_machine, ssh_username, ssh_password):
+        """Establishes a ssh connection to execute command.
+        :param ssh_machine: IP of the machine to which SSH connection to be established.
+        :param ssh_username: User Name of the machine to which SSH connection to be established..
+        :param ssh_password: Password of the machine to which SSH connection to be established..
+        returns connection Object
+        """
+
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.connect(hostname=ssh_machine, username=ssh_username, password=ssh_password, timeout=10)
+        return client
+
+    def run_sudo_command(self, command="ls",
+                         jobid="None"):
+        """Executes a sudo command over a established SSH connectiom.
+
+        Args:
+            command (str, optional): The command to execute. Defaults to 'ls'.
+            jobid (str, optional): The job id to use. Defaults to 'None'.
+
+        Returns:
+            tuple: (bool, stderr): (True if the command was executed, the stderr)
+        """
+
+        root_ssh_client = paramiko.SSHClient()
+        root_ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+        try:
+            root_ssh_client.connect("root",
+                                    username=self.host_username,
+                                    timeout=5,
+                                    pkey=self.key)
+        except Exception as e:
+            self.logger.error(f"SSH connection failed: {e}")
             return False
 
-        # Use invoke_shell to establish an 'interactive session'
-        remote_conn = self.ssh_client.invoke_shell()
-        self.logger.debug("Interactive SSH session established")
-
-        # Strip the initial router prompt
-        output_open = remote_conn.recv(1000)
-
-        # See what we have
-        self.logger.debug(output_open.decode('utf-8'))
-        time.sleep(3)
-
-        # Now let's send the router a command
-        remote_conn.send(command + '\n')
-
-        # Wait for the command to complete
-        time.sleep(1)
-
-        # Print the output of the session
-        output_close = remote_conn.recv(5000)
-        self.logger.debug(output_close.decode('utf-8'))
-
-        # Close the connection
-        self.ssh_client.close()
-
-        return True
+        command = "sudo -S -p '' %s" % command
+        self.logger.info("Job[%s]: Executing: %s" % (jobid, command))
+        stdin, stdout, stderr = root_ssh_client.exec_command(command=command)
+        stdin.write(self.host_password + "\n")
+        stdin.flush()
+        stdoutput = [line for line in stdout]
+        stderroutput = [line for line in stderr]
+        for output in stdoutput:
+            self.logger.info("Job[%s]: %s" % (jobid, output.strip()))
+        # Check exit code.
+        self.logger.debug("Job[%s]:stdout: %s" % (jobid, stdoutput))
+        self.logger.debug("Job[%s]:stderror: %s" % (jobid, stderroutput))
+        self.logger.info("Job[%s]:Command status: %s" % (jobid, stdout.channel.recv_exit_status()))
+        if not stdout.channel.recv_exit_status():
+            self.logger.info("Job[%s]: Command executed." % jobid)
+            root_ssh_client.close()
+            if not stdoutput:
+                stdoutput = True
+            return True, stdoutput
+        else:
+            self.logger.error("Job[%s]: Command failed." % jobid)
+            for output in stderroutput:
+                self.logger.error("Job[%s]: %s" % (jobid, output))
+            root_ssh_client.close()
+            return False, stderroutput
 
     def is_host_online(self):
         """Check if the host pc is online"""
@@ -322,4 +355,4 @@ class SuckerfishBot:
         bash_command = "sudo echo '" + grubenv_text + "' > /boot/grub/grubenv"
 
         # Execute the bash command
-        return self.send_command_to_host(bash_command)
+        return self.run_sudo_command(bash_command)

@@ -40,6 +40,7 @@ def get_config(config_file: str):
         # host pc data
         host_ip: str = config['host_pc']['local_ip']
         host_username: str = config['host_pc']['username']
+        password: str = config['host_pc']['password']
         windows_entry_id: int = config['host_pc']['grub_windows_entry']
 
         # logging
@@ -54,6 +55,7 @@ def get_config(config_file: str):
         'bot_token': bot_token,
         'host_ip': host_ip,
         'host_username': host_username,
+        'host_password': password,
         'power_pin': power_pin,
         'reset_pin': reset_pin,
         'windows_entry_id': windows_entry_id,

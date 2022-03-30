@@ -13,6 +13,7 @@ telegram_api:
 host_pc:
   local_ip:  # Set up a fixed local ip first
   username:
+  password:
   grub_windows_entry: 1  # Second entry
 
 pin_wiring:
