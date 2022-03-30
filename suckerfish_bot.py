@@ -125,6 +125,7 @@ class SuckerfishBot:
 
     def is_host_online(self):
         """Check if the host pc is online"""
+        # TODO make it work for both windows and linux
         if self.connect_ssh():
             return True
         else:
@@ -222,7 +223,7 @@ class SuckerfishBot:
         elif data == 'no':
             query.edit_message_text(text=f"Shutdown canceled")
         else:
-            raise RuntimeError("Unknown callback data")
+            self.logger.error(f"(check_force_shutdown) Unknown callback data: {data}")
 
     @only_allowed_chats
     def power_on(self, update: Update, context: CallbackContext):
@@ -277,14 +278,18 @@ class SuckerfishBot:
             query.edit_message_text(text=f"Booting Linux")
             self.power_switch_action()
         else:
-            raise RuntimeError("Unknown callback data")
+            self.logger.error(f"(select_os) Unknown callback data: {data}")
 
     def check_host_online(self, update: Update, context: CallbackContext) -> None:
-        """Check if the host is online"""
-        if self.connect_ssh():
-            update.message.reply_text(f"The host is online")
+        """Reply if the host is online"""
+        if self.is_host_online():
+            update.message.reply_text(
+                'The host is online'
+            )
         else:
-            update.message.reply_text(f"The host is offline")
+            update.message.reply_text(
+                'The host is offline'
+            )
 
     def make_windows_next(self):
         """Make the windows entry the default for the next boot"""
