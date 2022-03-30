@@ -15,6 +15,7 @@ def main():
 
     bot_config, log_config = get_config('config.yaml')
 
+    dev_updater = Updater(token=bot_config['dev_bot_token'])
     logger = DevChatLogger(
         dev_updater,
         log_config['dev_chat_id'],
@@ -45,15 +46,13 @@ def main():
     except KeyboardInterrupt:
         logger.info('KeyboardInterrupt received, exiting...')
     except Exception as e:
-        # Create the dev chat bot
-        dev_updater = Updater(token=bot_config['dev_bot_token'])
-        dev_bot = dev_updater.bot
-
-        # Send the error to the dev chat
-        dev_bot.send_message(
-            chat_id=log_config['dev_chat_id'],
-            text=f'Error: {e}'
-        )
+        logger.critical(f'An error occurred in suckerbot: {e}')
+    finally:
+        logger.info('Exiting...')
+        dev_updater.stop()
+        dev_updater.is_idle = False
+        dev_updater.job_queue.stop()
+        logger.info('Stopped')
 
 
 if __name__ == "__main__":
