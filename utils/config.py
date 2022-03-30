@@ -1,6 +1,16 @@
 from typing import List
 import yaml
 
+from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL
+
+str2log_level = {
+    'debug': DEBUG,
+    'info': INFO,
+    'warning': WARNING,
+    'error': ERROR,
+    'critical': CRITICAL
+}
+
 def get_config(config_file: str):
     """Preps the config file for use in the bot and logger
 
@@ -55,8 +65,8 @@ def get_config(config_file: str):
         'dev_bot_token': dev_bot_token,
         'dev_chat_id': dev_chat_id,
         'log_file': log_file,
-        'chat_log_level': chat_log_level,
-        'file_log_level': file_log_level
+        'chat_log_level': str2log_level[chat_log_level.lower()],
+        'file_log_level': str2log_level[file_log_level.lower()]
     }
 
     return bot_config, log_config
