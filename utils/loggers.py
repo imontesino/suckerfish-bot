@@ -38,7 +38,7 @@ class DevChatLogger:
         self.chat_log_level = chat_log_level
 
         # Use the updater to send the messages
-        self.updater = Updater(bot_token=bot_token, use_context=True)
+        self.updater = Updater(bot_token, use_context=True)
 
     def error_handler(self, update: object, context: CallbackContext) -> None:
         """Log the error and send a telegram message to notify the developer."""
