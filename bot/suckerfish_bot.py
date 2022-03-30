@@ -2,6 +2,7 @@
 
 import logging
 import socket
+import subprocess
 import time
 from typing import List
 
@@ -11,6 +12,7 @@ from requests import get
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import (CallbackContext, CallbackQueryHandler,
                           CommandHandler, Updater)
+
 
 def only_allowed_chats(func):
     """Decorator for callbacks which are only allowed to a specific user list"""
@@ -138,21 +140,7 @@ class SuckerfishBot:
     def is_host_online(self):
         """Check if the host pc is online"""
         # TODO make it work for both windows and linux
-        if self.ssh_client.get_transport() is not None:
-            if self.ssh_client.get_transport().is_active():
-                return True
-            else:
-                self.logger.debug(
-                    f"ssh_client.get_transport().is_active() returned False"
-                    f"Trying to connect to {self.host_ip} with username {self.host_username}"
-                )
-                return False
-        else:
-            self.logger.debug(
-                f"ssh_client.get_transport() is None\n"
-                f"Trying to connect to {self.host_ip} with username {self.host_username}"
-            )
-            return False
+        return subprocess.check_output(["ping", "-c", "1", self.host_ip])
 
     def start(self):
         """Start the bot."""
