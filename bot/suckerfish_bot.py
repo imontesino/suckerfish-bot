@@ -1,9 +1,11 @@
 #!/usr/bin/python3
 
+from asyncio.windows_events import NULL
 import os
 import socket
 import time
-from typing import List
+from typing import List, Optional
+import logging
 
 import paramiko
 import yaml
@@ -13,10 +15,6 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import (CallbackContext, CallbackQueryHandler,
                           CommandHandler, Updater)
 
-from utils.loggers import DevChatLogger
-from logging import DEBUG, INFO, WARN, ERROR, CRITICAL, WARNING
-
-jupyter_active = False
 
 def only_allowed_chats(func):
     """Decorator for callbacks which are only allowed to a specific user list"""
@@ -34,10 +32,14 @@ class SuckerfishBot:
     """ Telegram bot class with the methods to turn on and off the pc"""
 
     def __init__(self,
-                 config_file: str = 'config.yaml',
-                 dev_chat_log_level: int = ERROR,
-                 file_log_level: int = INFO,
-                 log_file: str = 'suckerfish_bot.log'):
+                 bot_token: str,
+                 host_ip: str,
+                 host_username: str,
+                 power_pin: int = 21,
+                 reset_pin: int = 20,
+                 windows_entry_id: int = 1,  # Second after ubuntu
+                 allowed_chats: List[str] = None,
+                 logger = None,):
         """Initialize the bot
 
         Args:
@@ -45,21 +47,23 @@ class SuckerfishBot:
         """
 
         # Load the config
-        self.get_config(config_file)
+        self.bot_token = bot_token
+        self.allowed_chats = allowed_chats
+
+        # Pin wiring por the switches
+        self.power_pin = power_pin
+        self.reset_pin = reset_pin
+
+        # host pc data
+        self.host_ip = host_ip
+        self.host_username = host_username
+        self.windows_entry_id = windows_entry_id
 
         # Make sure to set use_context=True to use the new context based callbacks
         self.updater = Updater(self.bot_token, use_context=True)
 
         # Get the dispatcher to register handlers
         self.dp = self.updater.dispatcher
-
-        self.logger = DevChatLogger(
-            self.dev_chat_id,
-            self.updater,
-            chat_log_level=dev_chat_log_level,
-            file_log_level=file_log_level,
-            log_file=log_file
-        )
 
         # SSH client
         self.ssh_client = paramiko.SSHClient()
@@ -85,28 +89,11 @@ class SuckerfishBot:
         self.dp.add_handler(CommandHandler("power_on", self.power_on))
         self.dp.add_handler(CallbackQueryHandler(self.select_os, pattern="power_on_"))
 
-        self.dp.add_error_handler(self.logger.error_handler)
-
-    def get_config(self, config_file: str):
-        """Get the config from the yaml file"""
-        with open(config_file) as f:
-            config = yaml.load(f, Loader=yaml.FullLoader)
-
-            self.bot_token: str = config['telegram_api']['bot_token']
-            if self.bot_token is None or self.bot_token == '':
-                raise ValueError('No bot token found in config file')
-
-            self.dev_chat_id: int = config['telegram_api']['dev_chat_id']
-            self.allowed_chats: List[str] = config['telegram_api']['allowed_chats']
-
-            # Pin wiring por the switches
-            self.power_pin: int = config['pin_wiring']['power_pin']
-            self.reset_pin: int = config['pin_wiring']['reset_pin']
-
-            # host pc data
-            self.host_ip: str = config['host_pc']['local_ip']
-            self.host_username: str = config['host_pc']['username']
-            self.windows_entry_id: int = config['host_pc']['grub_windows_entry']
+        if logger is None:
+            self.logger = logging.getLogger(__name__)
+        else:
+            self.logger = logger
+            self.dp.add_error_handler(self.logger.error_handler)
 
     def connect_ssh(self, timeout=5) -> bool:
         """Connect to the ssh server"""
@@ -349,24 +336,3 @@ class SuckerfishBot:
 
         # Execute the bash command
         self.ssh_client.exec_command(bash_command)
-
-
-def main():
-    """Run the bot."""
-
-    # Set the directory of the script to the current working directory
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))
-
-    # Create a default instance of the bot
-    bot = SuckerfishBot()
-
-    # Start the bot
-    bot.start()
-
-    # Run the bot until you press Ctrl-C or the process receives SIGINT,
-    # SIGTERM or SIGABRT. This should be used most of the time, since
-    # start() is non-blocking and will stop the bot gracefully.
-    bot.idle()
-
-if __name__ == "__main__":
-    main()

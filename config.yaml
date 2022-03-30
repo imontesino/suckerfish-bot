@@ -23,3 +23,9 @@ pin_wiring:
   # For reference https://es.pinout.xyz/pinout/io_pi_zero
   power_pin: 21  # Pin 40 on board
   reset_pin: 20  # Pin 38 on board
+
+logging:
+  # levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  chat_log_level: CRITICAL
+  file_log_level: INFO
+  log_file: suckerfish.log
