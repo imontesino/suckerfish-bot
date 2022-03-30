@@ -1,20 +1,16 @@
 #!/usr/bin/python3
 
-from asyncio.windows_events import NULL
-import os
+import logging
 import socket
 import time
-from typing import List, Optional
-import logging
+from typing import List
 
 import paramiko
-import yaml
 from gpiozero import LED
 from requests import get
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import (CallbackContext, CallbackQueryHandler,
                           CommandHandler, Updater)
-
 
 def only_allowed_chats(func):
     """Decorator for callbacks which are only allowed to a specific user list"""
