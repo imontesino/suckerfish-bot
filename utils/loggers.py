@@ -25,9 +25,12 @@ class DevChatLogger:
         """
         self.dev_chat_id = dev_chat_id
         logging.basicConfig(
-            filename=log_file,
             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-            level=file_log_level
+            level=file_log_level,
+                handlers=[
+                    logging.FileHandler(log_file),
+                    logging.StreamHandler()
+                ]
         )
         self.logger = logging.getLogger(__name__)
 
