@@ -15,7 +15,7 @@ def main():
 
     bot_config, log_config = get_config('config.yaml')
 
-    dev_updater = Updater(token=bot_config['dev_bot_token'])
+    dev_updater = Updater(token=log_config['dev_bot_token'])
     logger = DevChatLogger(
         dev_updater,
         log_config['dev_chat_id'],
