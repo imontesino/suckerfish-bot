@@ -14,8 +14,8 @@ def main():
     bot_config, log_config = get_config('config.yaml')
 
     logger = DevChatLogger(
-        bot_config['dev_bot_token'],
-        bot_config['dev_chat_id'],
+        log_config['dev_bot_token'],
+        log_config['dev_chat_id'],
         log_config['log_file'],
         log_config['chat_log_level'],
         log_config['file_log_level']
