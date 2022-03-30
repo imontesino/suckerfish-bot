@@ -44,15 +44,15 @@ class SuckerfishBot:
             config_file (str, optional): The config file to use. Defaults to 'config.yaml'
         """
 
+        # Load the config
+        self.get_config(config_file)
+
         self.logger = DevChatLogger(
             self.dev_chat_id,
             chat_log_level=dev_chat_log_level,
             file_log_level=file_log_level,
             log_file=log_file
         )
-
-        # Load the config
-        self.get_config(config_file)
 
         # SSH client
         self.ssh_client = paramiko.SSHClient()
@@ -115,11 +115,13 @@ class SuckerfishBot:
                 try:
                     self.ssh_client.connect(self.host_ip, username=self.host_username, timeout=timeout)
                 except socket.timeout:
+                    self.logger.debug(f"SSH connection timed out")
                     pass
 
             return self.ssh_client.get_transport().is_active()
 
         else:
+            self.logger.debug(f"ssh_client.get_transport() is None")
             return False
 
     def is_host_online(self):
