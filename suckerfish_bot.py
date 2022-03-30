@@ -44,6 +44,13 @@ class SuckerfishBot:
             config_file (str, optional): The config file to use. Defaults to 'config.yaml'
         """
 
+        self.logger = DevChatLogger(
+            self.dev_chat_id,
+            chat_log_level=dev_chat_log_level,
+            file_log_level=file_log_level,
+            log_file=log_file
+        )
+
         # Load the config
         self.get_config(config_file)
 
@@ -77,14 +84,6 @@ class SuckerfishBot:
 
         self.dp.add_handler(CommandHandler("power_on", self.power_on))
         self.dp.add_handler(CallbackQueryHandler(self.select_os, pattern="power_on_"))
-
-        # log all errors
-        self.logger = DevChatLogger(
-            self.dev_chat_id,
-            chat_log_level=dev_chat_log_level,
-            file_log_level=file_log_level,
-            log_file=log_file
-        )
 
         self.dp.add_error_handler(self.logger.error_handler)
 
