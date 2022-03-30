@@ -1,6 +1,4 @@
-from asyncio.log import logger
 import os
-from cv2 import log
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
@@ -47,12 +45,6 @@ def main():
         logger.info('KeyboardInterrupt received, exiting...')
     except Exception as e:
         logger.critical(f'An error occurred in suckerbot: {e}')
-    finally:
-        logger.info('Exiting...')
-        dev_updater.stop()
-        dev_updater.is_idle = False
-        dev_updater.job_queue.stop()
-        logger.info('Stopped')
 
 
 if __name__ == "__main__":
