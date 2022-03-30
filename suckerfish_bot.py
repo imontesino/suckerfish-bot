@@ -14,6 +14,7 @@ from telegram.ext import (CallbackContext, CallbackQueryHandler,
                           CommandHandler, Updater)
 
 from utils.loggers import DevChatLogger
+from logging import DEBUG, INFO, WARN, ERROR, CRITICAL, WARNING
 
 jupyter_active = False
 
@@ -25,6 +26,7 @@ def only_allowed_chats(func):
         elif str(update.message.chat_id) in self.allowed_chats:
             return func(self, update, context)
         else:
+            self.logger.info(f"User {update.message.chat_id} tried to access a restricted command")
             update.message.reply_text('Only owner allowed')
     return wrapped
 
@@ -32,7 +34,10 @@ class SuckerfishBot:
     """ Telegram bot class with the methods to turn on and off the pc"""
 
     def __init__(self,
-                 config_file: str = 'config.yaml'):
+                 config_file: str = 'config.yaml',
+                 dev_chat_log_level: int = ERROR,
+                 file_log_level: int = INFO,
+                 log_file: str = 'suckerfish_bot.log'):
         """Initialize the bot
 
         Args:
@@ -74,9 +79,14 @@ class SuckerfishBot:
         self.dp.add_handler(CallbackQueryHandler(self.select_os, pattern="power_on_"))
 
         # log all errors
-        self.logger = DevChatLogger(self.dev_chat_id)
-        self.dp.add_error_handler(self.logger.error_handler)
+        self.logger = DevChatLogger(
+            self.dev_chat_id,
+            chat_log_level=dev_chat_log_level,
+            file_log_level=file_log_level,
+            log_file=log_file
+        )
 
+        self.dp.add_error_handler(self.logger.error_handler)
 
     def get_config(self, config_file: str):
         """Get the config from the yaml file"""
