@@ -2,6 +2,7 @@ import html
 import json
 import logging
 import traceback
+import time
 
 from telegram import ParseMode, Update
 from telegram.ext import CallbackContext, Updater
@@ -66,6 +67,9 @@ class DevChatLogger:
 
     def __send_log_message(self, log_msg: str) -> None:
         self.logger.debug(log_msg)
+
+        # Add timestamp to the message
+        chat_msg = f'{time.strftime("%Y-%m-%d %H:%M:%S")}: {log_msg}'
 
         # use the updater to send the message to the dev chat
         self.updater.bot.send_message(chat_id=self.dev_chat_id, text=log_msg, parse_mode=ParseMode.HTML)
