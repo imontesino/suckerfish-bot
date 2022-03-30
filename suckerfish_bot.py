@@ -47,8 +47,15 @@ class SuckerfishBot:
         # Load the config
         self.get_config(config_file)
 
+        # Make sure to set use_context=True to use the new context based callbacks
+        self.updater = Updater(self.bot_token, use_context=True)
+
+        # Get the dispatcher to register handlers
+        self.dp = self.updater.dispatcher
+
         self.logger = DevChatLogger(
             self.dev_chat_id,
+            self.updater,
             chat_log_level=dev_chat_log_level,
             file_log_level=file_log_level,
             log_file=log_file
@@ -63,12 +70,6 @@ class SuckerfishBot:
         # Define the power and reset pins
         self.power_switch = LED(self.power_pin)
         self.reset_switch = LED(self.reset_pin)
-
-        # Make sure to set use_context=True to use the new context based callbacks
-        self.updater = Updater(self.bot_token, use_context=True)
-
-        # Get the dispatcher to register handlers
-        self.dp = self.updater.dispatcher
 
         # on different commands - answer in Telegram
         self.dp.add_handler(CommandHandler("current_ip", self.current_ip))

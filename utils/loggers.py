@@ -4,16 +4,17 @@ import logging
 import traceback
 
 from telegram import ParseMode, Update
-from telegram.ext import CallbackContext
+from telegram.ext import CallbackContext, Updater
 
 
 class DevChatLogger:
 
     def __init__(self,
-                 dev_chat_id,
+                 dev_chat_id: str,
+                 updater: Updater,
                  chat_log_level=logging.ERROR,
                  file_log_level=logging.INFO,
-                 log_file_name='dev_chat_log.log'):
+                 log_file='dev_chat_log.log'):
         """
         Initialize the DevChatLogger.
 
@@ -24,13 +25,16 @@ class DevChatLogger:
         """
         self.dev_chat_id = dev_chat_id
         logging.basicConfig(
-            filename=log_file_name,
+            filename=log_file,
             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
             level=file_log_level
         )
         self.logger = logging.getLogger(__name__)
 
         self.chat_log_level = chat_log_level
+
+        # Use the updater to send the messages
+        self.updater = updater
 
     def error_handler(self, update: object, context: CallbackContext) -> None:
         """Log the error and send a telegram message to notify the developer."""
@@ -57,41 +61,39 @@ class DevChatLogger:
         # Finally, send the message
         context.bot.send_message(chat_id=self.dev_chat_id, text=message, parse_mode=ParseMode.HTML)
 
-    def __send_log_message(self, update: Update, msg: str) -> None:
-        self.logger.debug(msg)
+    def __send_log_message(self, log_msg: str) -> None:
+        self.logger.debug(log_msg)
 
-        update_str = update.to_dict() if isinstance(update, Update) else str(update)
-        message = (
-            f'Log message\n'
-            f'<pre>update = {html.escape(json.dumps(update_str, indent=2, ensure_ascii=False))}'
-            '</pre>\n\n'
-            f'<pre>{html.escape(msg)}</pre>'
-        )
-
-        self.logger.info(message)
+        # use the updater to send the message to the dev chat
+        self.updater.bot.send_message(chat_id=self.dev_chat_id, text=log_msg, parse_mode=ParseMode.HTML)
 
     # python logger wrappers to log to the dev chat
-    def debug(self, update: Update, msg: str) -> None:
+    def debug(self, msg: str) -> None:
         self.logger.debug(msg)
         if self.chat_log_level <= logging.DEBUG:
-            self.__send_log_message(update, msg)
+            msg = f'<b>DEBUG:</b> {msg}'
+            self.__send_log_message(msg)
 
-    def info(self, update: Update, msg: str) -> None:
+    def info(self, msg: str) -> None:
         self.logger.info(msg)
         if self.chat_log_level <= logging.INFO:
-            self.__send_log_message(update, msg)
+            msg = f'<b>INFO:</b> {msg}'
+            self.__send_log_message(msg)
 
-    def warning(self, update: Update, msg: str) -> None:
+    def warning(self, msg: str) -> None:
         self.logger.warning(msg)
         if self.chat_log_level <= logging.WARNING:
-            self.__send_log_message(update, msg)
+            msg = f'<b>WARNING:</b> {msg}'
+            self.__send_log_message(msg)
 
-    def critical(self, update: Update, msg: str) -> None:
+    def critical(self, msg: str) -> None:
         self.logger.critical(msg)
         if self.chat_log_level <= logging.CRITICAL:
-            self.__send_log_message(update, msg)
+            msg = f'<b>CRITICAL:</b> {msg}'
+            self.__send_log_message(msg)
 
-    def error(self, update: Update, msg: str) -> None:
+    def error(self, msg: str) -> None:
         self.logger.error(msg)
         if self.chat_log_level <= logging.ERROR:
-            self.__send_log_message(update, msg)
+            msg = f'<b>ERROR:</b> {msg}'
+            self.__send_log_message(msg)
