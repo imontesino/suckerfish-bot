@@ -21,7 +21,6 @@ def get_config(config_file: str):
         if bot_token is None or bot_token == '':
             raise ValueError('No bot token found in config file')
 
-        dev_chat_id: int = config['telegram_api']['dev_chat_id']
         allowed_chats: List[str] = config['telegram_api']['allowed_chats']
 
         # Pin wiring por the switches
@@ -34,11 +33,30 @@ def get_config(config_file: str):
         windows_entry_id: int = config['host_pc']['grub_windows_entry']
 
         # logging
+        dev_chat_id: str = config['logging']['dev_chat_id']
+        dev_bot_token: str = config['logging']['dev_bot_token']
         log_file: str = config['logging']['log_file']
         chat_log_level: int = config['logging']['chat_log_level']
         file_log_level: int = config['logging']['file_log_level']
 
-    bot_config = (bot_token, host_ip, host_username, power_pin, reset_pin, windows_entry_id, allowed_chats)
-    log_config = (dev_chat_id, chat_log_level, file_log_level, log_file)
+    # bot config: bot_token, host_ip, host_username, power_pin, reset_pin, windows_entry_id, allowed_chats)
+    bot_config = {
+        'bot_token': bot_token,
+        'host_ip': host_ip,
+        'host_username': host_username,
+        'power_pin': power_pin,
+        'reset_pin': reset_pin,
+        'windows_entry_id': windows_entry_id,
+        'allowed_chats': allowed_chats
+    }
+
+    # logging config: log_file, chat_log_level, file_log_level
+    log_config = {
+        'dev_bot_token': dev_bot_token,
+        'dev_chat_id': dev_chat_id,
+        'log_file': log_file,
+        'chat_log_level': chat_log_level,
+        'file_log_level': file_log_level
+    }
 
     return bot_config, log_config

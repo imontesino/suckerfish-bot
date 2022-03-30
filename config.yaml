@@ -6,9 +6,6 @@ telegram_api:
   # https://www.siteguarding.com/en/how-to-get-telegram-bot-api-token
   bot_token:
 
-  # Chat id for the dev (send errors, info, etc.)
-  dev_chat_id:
-
   # List of user's chat id with access to the power on/off functions,
   # leave empty for no restriction (not recommended)
   allowed_chats:
@@ -26,6 +23,8 @@ pin_wiring:
 
 logging:
   # levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  dev_chat_id:
+  dev_bot_token:
   chat_log_level: CRITICAL
   file_log_level: INFO
   log_file: suckerfish.log
