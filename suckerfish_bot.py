@@ -17,7 +17,7 @@ from utils.loggers import DevChatLogger
 
 jupyter_active = False
 
-def only_allowed(func):
+def only_allowed_chats(func):
     """Decorator for callbacks which are only allowed to a specific user list"""
     def wrapped(self, update: Update, context: CallbackContext):
         if self.allowed_chats is None:
@@ -154,7 +154,7 @@ class SuckerfishBot:
         time.sleep(1)
         self.power_switch.off()
 
-    @only_allowed
+    @only_allowed_chats
     def press_power_switch(self, update: Update, context: CallbackContext):
         """Short the power switch on the computer"""
         self.power_switch_action()
@@ -164,7 +164,7 @@ class SuckerfishBot:
         time.sleep(1)
         self.reset_switch.off()
 
-    @only_allowed
+    @only_allowed_chats
     def press_reset_switch(self, update: Update, context: CallbackContext):
         """Short the reset switch on the computer"""
         self.reset_switch_action()
@@ -174,7 +174,7 @@ class SuckerfishBot:
         time.sleep(5)
         self.power_switch.off()
 
-    @only_allowed
+    @only_allowed_chats
     def force_shutdown(self, update: Update, context: CallbackContext) -> None:
         """ Ask the user if he wants to forcefully shutdown the computer """
         keyboard = [
@@ -205,7 +205,7 @@ class SuckerfishBot:
         else:
             query.edit_message_text(text=f"Shutdown canceled")
 
-    @only_allowed
+    @only_allowed_chats
     def power_on(self, update: Update, context: CallbackContext):
         """Power on the computer into the selected OS"""
 
