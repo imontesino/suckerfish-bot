@@ -65,7 +65,6 @@ class SuckerfishBot:
         self.ssh_client = paramiko.SSHClient()
         self.key = paramiko.RSAKey.from_private_key_file('/home/pi/.ssh/id_rsa')
         self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        self.connect_ssh()
 
         # Define the power and reset pins
         self.power_switch = LED(self.power_pin)
@@ -112,11 +111,46 @@ class SuckerfishBot:
     def connect_ssh(self, timeout=5) -> bool:
         """Connect to the ssh server"""
         try:
-            self.ssh_client.connect(self.host_ip, username=self.host_username, timeout=timeout)
+            self.ssh_client.connect(self.host_ip,
+                                    username=self.host_username,
+                                    timeout=timeout,
+                                    pkey=self.key)
             return True
         except Exception as e:
             self.logger.error(f"SSH connection failed: {e}")
             return False
+
+    def send_command_to_host(self, command: str) -> bool:
+        """Send a command to the host"""
+        # connect to the host
+        if not self.connect_ssh():
+            return False
+
+        # Use invoke_shell to establish an 'interactive session'
+        remote_conn = self.ssh_client.invoke_shell()
+        self.logger.debug("Interactive SSH session established")
+
+        # Strip the initial router prompt
+        output_open = remote_conn.recv(1000)
+
+        # See what we have
+        self.logger.debug(output_open.decode('utf-8'))
+        time.sleep(3)
+
+        # Now let's send the router a command
+        remote_conn.send(command + '\n')
+
+        # Wait for the command to complete
+        time.sleep(1)
+
+        # Print the output of the session
+        output_close = remote_conn.recv(5000)
+        self.logger.debug(output_close.decode('utf-8'))
+
+        # Close the connection
+        self.ssh_client.close()
+
+        return True
 
     def is_host_online(self):
         """Check if the host pc is online"""
@@ -275,7 +309,7 @@ class SuckerfishBot:
             self.power_switch.on()
             time.sleep(1)
             self.power_switch.off()
-            time.sleep(20)
+            time.sleep(60)
             if self.connect_ssh():
                 self.logger.info("SSH connection successful")
                 self.make_windows_next()
