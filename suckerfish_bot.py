@@ -111,26 +111,30 @@ class SuckerfishBot:
 
     def connect_ssh(self, timeout=5) -> bool:
         """Connect to the ssh server"""
-        if self.ssh_client.get_transport() is not None:
-            if not self.ssh_client.get_transport().is_active():
-                try:
-                    self.ssh_client.connect(self.host_ip, username=self.host_username, timeout=timeout)
-                except socket.timeout:
-                    self.logger.debug(f"SSH connection timed out")
-                    pass
-
-            return self.ssh_client.get_transport().is_active()
-
-        else:
-            self.logger.debug(f"ssh_client.get_transport() is None")
+        try:
+            self.ssh_client.connect(self.host_ip, username=self.host_username, timeout=timeout)
+            return True
+        except socket.timeout:
+            self.logger.debug(f"SSH connection timed out")
             return False
 
     def is_host_online(self):
         """Check if the host pc is online"""
         # TODO make it work for both windows and linux
-        if self.connect_ssh():
-            return True
+        if self.ssh_client.get_transport() is not None:
+            if self.ssh_client.get_transport().is_active():
+                return True
+            else:
+                self.logger.debug(
+                    f"ssh_client.get_transport().is_active() returned False"
+                    f"Trying to connect to {self.host_ip} with username {self.host_username}"
+                )
+                return False
         else:
+            self.logger.debug(
+                f"ssh_client.get_transport() is None\n"
+                f"Trying to connect to {self.host_ip} with username {self.host_username}"
+            )
             return False
 
     def start(self):
@@ -272,9 +276,13 @@ class SuckerfishBot:
             time.sleep(1)
             self.power_switch.off()
             time.sleep(20)
-            self.connect_ssh()
-            self.make_windows_next()
-            self.reset_switch_action()
+            if self.connect_ssh():
+                self.logger.info("SSH connection successful")
+                self.make_windows_next()
+                self.reset_switch_action()
+            else:
+                self.logger.error("SSH connection failed in power_on->select_os")
+                query.edit_message_text(text=f"SSH connection failed")
 
         elif data == 'Ubuntu':
             query.edit_message_text(text=f"Booting Linux")
