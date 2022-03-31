@@ -30,7 +30,7 @@ def main():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
     if args.config is None:
-        config_file = 'config.yml'
+        config_file = 'config.yaml'
     else:
         config_file = args.config
 
@@ -44,11 +44,6 @@ def main():
         log_file=log_config['log_file']
     )
 
-
-    if args.interactive:
-        import IPython
-        IPython.embed()
-
     try:
         bot = SuckerfishBot(
             bot_config['bot_token'],
@@ -61,6 +56,10 @@ def main():
             bot_config['allowed_chats'],
             logger
         )
+
+        if args.interactive:
+            import IPython
+            IPython.embed()
 
         # Start the bot
         bot.start()
