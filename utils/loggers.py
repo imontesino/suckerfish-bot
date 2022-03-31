@@ -64,6 +64,7 @@ class DevChatLogger:
 
         # Finally, send the message
         context.bot.send_message(chat_id=self.dev_chat_id, text=message, parse_mode=ParseMode.HTML)
+        self.error(msg=message)
 
     def __send_log_message(self, log_msg: str) -> None:
         self.logger.debug(log_msg)
