@@ -107,19 +107,6 @@ class SuckerfishBot:
             self.logger.error(f"SSH connection failed: {e}")
             return False
 
-    def get_ssh_connection(self, ssh_machine, ssh_username, ssh_password):
-        """Establishes a ssh connection to execute command.
-        :param ssh_machine: IP of the machine to which SSH connection to be established.
-        :param ssh_username: User Name of the machine to which SSH connection to be established..
-        :param ssh_password: Password of the machine to which SSH connection to be established..
-        returns connection Object
-        """
-
-        client = paramiko.SSHClient()
-        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        client.connect(hostname=ssh_machine, username=ssh_username, password=ssh_password, timeout=10)
-        return client
-
     def run_sudo_command(self, command="ls",
                          jobid="None"):
         """Executes a sudo command over a established SSH connectiom.
@@ -137,7 +124,8 @@ class SuckerfishBot:
 
         try:
             root_ssh_client.connect(hostname=self.host_ip,
-                                    username="root",
+                                    username=self.host_username,
+                                    password=self.host_password,
                                     timeout=5,
                                     pkey=self.key)
         except Exception as e:
