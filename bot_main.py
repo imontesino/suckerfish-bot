@@ -1,18 +1,39 @@
+import argparse
 import os
+from re import I
 
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from telegram.ext import CommandHandler, Filters, MessageHandler, Updater
 
 from bot.suckerfish_bot import SuckerfishBot
-from utils.loggers import DevChatLogger
 from utils.config import get_config
+from utils.loggers import DevChatLogger
+
+
+def parse_args():
+    """Parses the CLI arguments."""
+    parser = argparse.ArgumentParser(description='Suckerfish bot main script')
+
+    parser.add_argument("--interactive", "-i", action="store_true",
+                        help="Run the bot in interactive mode.")
+    parser.add_argument("--config", "-c", type=str,
+                        help="Path to the config file.")
+
+    return parser.parse_args()
 
 def main():
     """Run the bot."""
 
+    args = parse_args()
+
     # Set the directory of the script to the current working directory
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-    bot_config, log_config = get_config('config.yaml')
+    if args.config is None:
+        config_file = 'config.yml'
+    else:
+        config_file = args.config
+
+    bot_config, log_config = get_config(config_file)
 
     logger = DevChatLogger(
         log_config['dev_bot_token'],
@@ -21,6 +42,11 @@ def main():
         file_log_level=log_config['file_log_level'],
         log_file=log_config['log_file']
     )
+
+
+    if args.interactive:
+        import IPython
+        IPython.embed()
 
     try:
         bot = SuckerfishBot(
