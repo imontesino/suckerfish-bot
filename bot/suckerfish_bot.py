@@ -336,17 +336,11 @@ class SuckerfishBot:
 
     def make_windows_next(self) -> bool:
         """Make the windows entry the default for the next boot"""
-        filename = "resources/grubenv_template"
-        with open(filename, "r") as file:
-            #read whole file to a string
-            data = file.read()
-
-        #replace the configured entry
-        grubenv_text = data.replace("<entry_id>", str(self.windows_entry_id))
-
-        done, _ = self.run_sudo_command("echo '" + grubenv_text + "' > /tmp/grubenv_txt")
-        if done:
-             done, _ = self.run_sudo_command("mv /tmp/grubenv_txt /boot/grub/grubenv")
 
         # Execute the bash command
+        return self.reboot_into_entry(self.windows_entry_id)
+
+    def reboot_into_entry(self, entry_id: int) -> bool:
+        """Reboot into the given entry"""
+        done, _ = self.run_sudo_command("grub-reboot " + str(entry_id))
         return done
