@@ -28,10 +28,10 @@ class DevChatLogger:
         logging.basicConfig(
             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
             level=file_log_level,
-                handlers=[
-                    logging.FileHandler(log_file),
-                    logging.StreamHandler()
-                ]
+            handlers=[
+                logging.FileHandler(log_file, mode='w'),
+                logging.StreamHandler()
+            ]
         )
         self.logger = logging.getLogger(__name__)
 
