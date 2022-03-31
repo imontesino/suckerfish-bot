@@ -302,12 +302,27 @@ class SuckerfishBot:
 
         if data == 'Windows':
             query.edit_message_text(text=f"Booting Windows")
+
+            # Turn on the computer
             self.power_switch.on()
             time.sleep(1)
             self.power_switch.off()
-            time.sleep(75)
+
+            # Let it boot into Ubuntu
+            tries = 0
+            while not self.is_host_online() and tries < 20:
+                time.sleep(5)
+                tries += 1
+
+            # check if the host is online
+            if not self.is_host_online():
+                query.edit_message_text(text=f"Could not boot Windows")
+
+            # Connect to the host via ssh
             if self.connect_ssh():
                 self.logger.info("SSH connection successful")
+
+                # Set next boot to Windows
                 if self.make_windows_next():
                     self.reset_switch_action()
                 else:
@@ -318,7 +333,18 @@ class SuckerfishBot:
                 query.edit_message_text(text=f"SSH connection failed")
 
         elif data == 'Ubuntu':
-            query.edit_message_text(text=f"Booting Linux")
+            # Nothing to do Ubuntu is the default
+            query.edit_message_text(text=f"Booting Ubuntu")
+                        # Let it boot into Ubuntu
+            tries = 0
+            while not self.is_host_online() and tries < 20:
+                time.sleep(5)
+                tries += 1
+
+            # check if the host is online
+            if not self.is_host_online():
+                query.edit_message_text(text=f"Could not boot Ubuntu")
+
             self.power_switch_action()
         else:
             self.logger.error(f"(select_os) Unknown callback data: {data}")
@@ -342,5 +368,8 @@ class SuckerfishBot:
 
     def reboot_into_entry(self, entry_id: int) -> bool:
         """Reboot into the given entry"""
+        # Regen the grub env
+        done, _ = self.run_sudo_command("sudo grub-editenv create")
+        # set the entry id
         done, _ = self.run_sudo_command("grub-reboot " + str(entry_id))
         return done
