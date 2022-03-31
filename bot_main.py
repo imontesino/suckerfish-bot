@@ -6,6 +6,7 @@ from bot.suckerfish_bot import SuckerfishBot
 from utils.loggers import DevChatLogger
 from utils.config import get_config
 
+
 def main():
     """Run the bot."""
 

@@ -158,10 +158,14 @@ class SuckerfishBot:
             root_ssh_client.close()
             return False, stderroutput
 
-    def is_host_online(self):
+    def is_host_online(self) -> bool:
         """Check if the host pc is online"""
         # TODO make it work for both windows and linux
-        return subprocess.check_output(["ping", "-c", "1", self.host_ip])
+        try:
+            subprocess.check_output(["ping", "-c", "1", self.host_ip])
+        except:
+            return False
+        return True
 
     def start(self):
         """Start the bot."""
@@ -301,7 +305,7 @@ class SuckerfishBot:
             self.power_switch.on()
             time.sleep(1)
             self.power_switch.off()
-            time.sleep(60)
+            time.sleep(75)
             if self.connect_ssh():
                 self.logger.info("SSH connection successful")
                 if self.make_windows_next():
@@ -340,7 +344,9 @@ class SuckerfishBot:
         #replace the configured entry
         grubenv_text = data.replace("<entry_id>", str(self.windows_entry_id))
 
-        bash_command = "sudo echo '" + grubenv_text + "' > /boot/grub/grubenv"
+        done, _ = self.run_sudo_command("echo '" + grubenv_text + "' > /tmp/grubenv_txt")
+        if done:
+             done, _ = self.run_sudo_command("mv /tmp/grubenv_txt /boot/grub/grubenv")
 
         # Execute the bash command
-        return self.run_sudo_command(bash_command)
+        return done
