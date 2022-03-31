@@ -136,8 +136,8 @@ class SuckerfishBot:
         root_ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
         try:
-            root_ssh_client.connect("root",
-                                    username=self.host_username,
+            root_ssh_client.connect(hostname=self.host_ip,
+                                    username="root",
                                     timeout=5,
                                     pkey=self.key)
         except Exception as e:
